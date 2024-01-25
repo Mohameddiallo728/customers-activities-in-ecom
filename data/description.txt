@@ -1,0 +1,24 @@
+Description :
+Le jeu de données E-commerce Sales Data fournit une collection complète d'informations relatives aux profils des utilisateurs, aux détails des produits et aux interactions entre les utilisateurs et les produits. Il s'agit d'une ressource précieuse pour comprendre le comportement des clients, leurs préférences et les tendances d'achat sur une plateforme de commerce électronique.
+
+Structure du jeu de données :
+
+
+Feuille d'utilisateur : Cette feuille contient les profils des utilisateurs, y compris des détails tels que l'identifiant, le nom, l'âge, la localisation et d'autres informations pertinentes. Elle permet de comprendre les données démographiques et les caractéristiques des utilisateurs de la plateforme.
+
+
+Fiche produit : La fiche produit donne un aperçu des différents produits disponibles sur la plateforme de commerce électronique. Elle comprend les identifiants, les noms, les catégories, les prix, les descriptions et d'autres attributs spécifiques aux produits.
+
+
+Fiche d'interactions : La feuille d'interactions est un élément essentiel de l'ensemble de données, car elle capture les interactions entre les utilisateurs et les produits. Elle enregistre les détails des actions des utilisateurs, telles que les vues de produits, les achats, les avis et les évaluations. Ces données sont essentielles pour construire des systèmes de recommandation et comprendre les préférences des utilisateurs.
+
+
+Cas d'utilisation potentiels :
+
+Systèmes de recommandation : Grâce aux données d'interaction entre l'utilisateur et le produit, cet ensemble de données est idéal pour élaborer des systèmes de recommandation. Il permet de développer des recommandations de produits personnalisées afin d'améliorer l'expérience de l'utilisateur.
+
+Analyse du panier de produits : L'ensemble de données peut être utilisé pour l'analyse des paniers de marché afin de comprendre quels produits sont fréquemment achetés ensemble, ce qui facilite la gestion des stocks et le marketing ciblé.
+
+Analyse du comportement des utilisateurs : En analysant les interactions des utilisateurs, vous pouvez obtenir des informations sur leur comportement, notamment sur les catégories de produits les plus populaires, les habitudes de navigation et l'impact des avis et évaluations des utilisateurs sur les décisions d'achat.
+
+Marketing ciblé : L'ensemble de données peut éclairer les stratégies de marketing, permettant aux entreprises d'adapter les promotions et les publicités à des segments d'utilisateurs et à des catégories de produits spécifiques.
