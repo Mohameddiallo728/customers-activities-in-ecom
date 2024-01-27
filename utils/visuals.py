@@ -5,7 +5,6 @@ import dash_bootstrap_components as dbc
 import matplotlib.pyplot as plt
 import pandas as pd
 import plotly.express as px
-from dash import dash_table
 from dash import dcc, html
 from wordcloud import WordCloud
 
@@ -128,6 +127,29 @@ def generate_product_card(product_id, recommendations):
 
 def generate_product_visuel(product_info):
     # Création de la card selon le modèle fourni
+    info_elements = html.Span(
+        [
+            dbc.Badge(
+                product_info['Sub Category'],
+                color="secondary",
+                text_color="black",
+                className="border me-1",
+            ),
+            dbc.Badge(
+                "Model : " + product_info['Model Number'],
+                color="warning",
+                text_color="black",
+                className="border me-1",
+            ),
+            dbc.Badge(
+                f"Poids : {product_info['Shipping Weight (lbs)']} lbs",
+                color="secondary",
+                text_color="black",
+                className="border me-1",
+            ),
+            html.Br(), html.Br(),
+        ]
+    )
     card = dbc.Card(
         [
             dbc.Row(
@@ -143,8 +165,10 @@ def generate_product_visuel(product_info):
                         dbc.CardBody(
                             [
                                 html.H5(product_info['Product Name'], className="card-title"),
-                                html.H1(f"$ {product_info['Selling Price']}", className="card-text"),
-                                dbc.Button("Voir le produit", color="primary", href=product_info["Product Url"])
+                                info_elements,
+                                html.H1(f"$ {product_info['Selling Price']}", className="card-text price"),
+                                dbc.Button("Voir le produit", color="primary", href=product_info["Product Url"],
+                                           className="see-product")
                             ]
                         ),
                         className="col-md-8",
@@ -209,7 +233,7 @@ def generate_product_card2(product_id, recommendations):
 def generate_gender_pie_chart(data):
     gender_colors = [
         '#609FFF',  # Male
-        '#FFBF6D',   # Female
+        '#FFBF6D',  # Female
     ]
     # Pie chart avec Plotly Express
     fig = px.pie(data, names='Gender', title='Répartition des Genres',
@@ -230,7 +254,8 @@ def generate_category_distribution(data):
 
 def generate_purchase_frequency(data):
     # Group data by 'Frequency of Purchases' and calculate the sum of 'Purchase Amount (USD)'
-    frequency_sum = data.groupby('Frequency of Purchases')['Purchase Amount (USD)'].sum().reset_index(name='Total Purchase Amount')
+    frequency_sum = data.groupby('Frequency of Purchases')['Purchase Amount (USD)'].sum().reset_index(
+        name='Total Purchase Amount')
     # Create a bar chart for the sum of purchase amounts by frequency
     fig = px.bar(frequency_sum, x='Frequency of Purchases', y='Total Purchase Amount', title='Fréquence des achats',
                  color='Frequency of Purchases')
@@ -309,7 +334,7 @@ def generate_sales_by_category(data):
 def generate_purchase_by_gender(data):
     gender_colors = [
         '#FFBF6D',  # Male
-        '#609FFF'   # Female
+        '#609FFF'  # Female
     ]
     # Calculez la somme des montants d'achats par genre
     purchase_by_gender = data.groupby('Gender')['Purchase Amount (USD)'].sum().reset_index()
@@ -469,47 +494,20 @@ def generate_cluster_cards(data):
 
     for category in categories:
         filtered_data = data[data['Cluster'] == category]
-
         card_content = [
             dbc.CardHeader(f"Catégorie {get_category_label(category)}", style={'cursor': 'pointer'}),
-            dbc.CardBody(
-                [
-                    html.H1(len(filtered_data), className="card-title"),
-                    html.P(f"{get_category_label(category)}", className="card-text"),
-                    dbc.Button(f"View Users", id=f"button-{category}", n_clicks=0),
-                ]
-            ),
+            dbc.CardBody([
+                html.H1(len(filtered_data), className="card-title"),
+                html.P(f"{get_category_label(category)}", className="card-text"),
+                dbc.Button(f"View Users", id=f"button-{category}", n_clicks=0),
+            ]),
         ]
 
         card = dbc.Col(
             dbc.Card(card_content, color=get_category_color(category), inverse=True, id=f"cluster-card-{category}"))
 
-        # Modal component for each cluster
-        modal = generate_user_modal(category, filtered_data)
         cards.append(card)
-        cards.append(modal)
 
     return html.Div([
         dbc.Row(cards, className="mb-6")
     ])
-
-
-def generate_user_modal(category, filtered_data):
-    modal_content = [
-        dbc.ModalHeader(f"Liste des utilisateurs dans la catégorie {get_category_label(category)}"),
-        dbc.ModalBody(
-            [
-                dash_table.DataTable(
-                    id=f"datatable-{category}",
-                    columns=[
-                        {"name": col, "id": col, "deletable": False} for col in filtered_data.columns
-                    ],
-                    data=filtered_data.to_dict("records"),
-                    style_table={'height': '300px', 'overflowY': 'auto'},
-                )
-            ]
-        ),
-        dbc.ModalFooter(dbc.Button("Fermer", id=f"close-modal-{category}", className="ml-auto")),
-    ]
-
-    return dbc.Modal(modal_content, id=f"modal-{category}", size="xl", is_open=False)

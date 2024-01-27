@@ -4,8 +4,8 @@ from dash import State, dcc, html
 from dash.dependencies import Input, Output
 
 import callbacks
+
 # Initialiser l'application Dash
-from utils.data_loader import load_with_kmean
 
 app = dash.Dash(
     external_stylesheets=[dbc.themes.MORPH],
@@ -135,15 +135,16 @@ def toggle_collapse(n, is_open):
     return callbacks.toggle_collapse(n, is_open)
 
 
-categories = load_with_kmean()['Cluster'].unique()
-for category in categories:
-    @app.callback(
-        Output(f"modal-{category}", "open_modal"),
-        [Input(f"button-{category}", "n_clicks")],
-        [State(f"modal-{category}", "open_modal")]
-    )
-    def toggle_modal(category, open_modal):
-        return callbacks.toggle_modal(category, open_modal)
+@app.callback(
+    Output("user-list", "children"),
+    [Input("button-0", "n_clicks"),
+     Input("button-1", "n_clicks"),
+     Input("button-2", "n_clicks"),
+     Input('pagination', 'active_page')],
+    prevent_initial_call=True
+)
+def update_user_list(button0_clicks, button1_clicks, button2_clicks, active_page):
+    return callbacks.update_user_list(button0_clicks, button1_clicks, button2_clicks, active_page)
 
 
 @app.callback(

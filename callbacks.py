@@ -7,7 +7,6 @@ from pages import (
 )
 from pages import notfound
 from utils.data_loader import load_with_kmean
-from utils.visuals import generate_user_modal
 
 data = load_with_kmean()
 
@@ -39,17 +38,23 @@ def toggle_collapse(n, is_open):
     return is_open
 
 
-def toggle_modal(clicked_category, opened):
-    if clicked_category:
-        filtered_data = data[data['Cluster'] == clicked_category]
-        if not filtered_data.empty:
-            modal_content = [generate_user_modal(clicked_category, filtered_data)]
-            return modal_content, True  # Open the modal
+def update_user_list(button0_clicks, button1_clicks, button2_clicks, page_current):
+    ctx = dash.callback_context
+    # Check which button was clicked
+    clicked_button_id = ctx.triggered_id.split(".")[0] if ctx.triggered_id else None
 
-    elif clicked_category == "close-modal":
-        return dash.no_update, False  # Close the modal
+    # Handle button clicks
+    if clicked_button_id == "button-0":
+        category = 0
+    elif clicked_button_id == "button-1":
+        category = 1
+    elif clicked_button_id == "button-2":
+        category = 2
+    else:
+        category = 0
 
-    return dash.no_update, dash.no_update
+    # Call the function from callbacks.py
+    return segment.update_user_list(category, page_current)
 
 
 def update_recommendations_model(selected_user, selected_model):
