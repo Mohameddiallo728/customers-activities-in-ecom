@@ -488,7 +488,7 @@ def generate_wordcloud(data):
 
 
 def generate_cluster_cards(data):
-    data = apply_kmeans(data)
+    data = apply_kmeans(data)[0]
     categories = data['Cluster'].unique()
     cards = []
 

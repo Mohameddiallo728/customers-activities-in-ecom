@@ -167,6 +167,9 @@ body {
     color: white;
     background-color: #212529;
 }
+.bg-warning {
+    background-color: #FFBC65D9 !important
+}
 
 #page-content {
     padding: 2rem 1rem;

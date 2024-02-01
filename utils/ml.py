@@ -1,4 +1,5 @@
 from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
 from sklearn.preprocessing import StandardScaler
 from surprise import BaselineOnly, KNNWithZScore
 from surprise import KNNBasic
@@ -49,8 +50,12 @@ def apply_kmeans(data):
     num_clusters = 3
     kmeans = KMeans(n_clusters=num_clusters, random_state=42)
     data['Cluster'] = kmeans.fit_predict(features_scaled)
-
-    return data
+    silhouette_avg = silhouette_score(features_scaled, data['Cluster'])
+    print('silhouette_avg : ', silhouette_avg)
+    print('Cl 0 : ', data[data['Cluster'] == 0]['Purchase Amount (USD)'].mean())
+    print('Cl 1 :', data[data['Cluster'] == 1]['Purchase Amount (USD)'].mean())
+    print('Cl 2 :', data[data['Cluster'] == 2]['Purchase Amount (USD)'].mean())
+    return data, silhouette_avg
 
 
 def train_knn_model(data):

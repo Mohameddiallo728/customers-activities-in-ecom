@@ -9,7 +9,7 @@ from utils.ml import train_baseline_model
 from utils.ml import train_knn_model
 from utils.ml import train_knn_with_zscore_model
 from utils.ml import train_svd_model
-from utils.visuals import generate_product_card, generate_product_card2
+from utils.visuals import generate_product_card
 
 # Chargement des données et prétraitement pour le modèle de filtrage collaboratif
 recommendations = load_recommendations()
@@ -114,7 +114,6 @@ def update_recommendations_model(selected_user, num_products, selected_model):
         product_cards.append(product)
 
     return product_cards
-
 
 
 def update_model_comparison_graph(selected_user):
