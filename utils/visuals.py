@@ -308,6 +308,26 @@ def generate_location_countplot(data):
     return dcc.Graph(figure=fig)
 
 
+def generate_sales_map(data):
+    # Create a scatter map using latitude and longitude columns
+    fig = px.scatter_mapbox(data,
+                            lat='Latitude',
+                            lon='Longitude',
+                            hover_name='Location',
+                            hover_data={'Purchase Amount (USD)': ':,.2f'},
+                            color='Purchase Amount (USD)',
+                            title='Carte des ventes par locations',
+                            height=750,
+                            mapbox_style='carto-positron',
+                            zoom=3)
+
+    # Update layout with any additional styling
+    fig.update_layout(layout_style)
+
+    # Return the Dash Graph component with the generated figure
+    return dcc.Graph(figure=fig)
+
+
 def generate_sales_over_time(data):
     # Convertissez la colonne 'Date' en format de date si ce n'est pas déjà fait
     data['Date'] = pd.to_datetime(data['Date'])

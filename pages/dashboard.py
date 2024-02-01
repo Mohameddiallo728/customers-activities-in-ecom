@@ -32,6 +32,8 @@ layout = html.Div([
         dbc.Col(generate_season_countplot(customers)),
     ], className="mb-4"),
     html.Hr(),
+    generate_sales_map(activities),
+    html.Hr(),
     generate_location_countplot(customers),
     html.Hr(),
     dbc.Row([
