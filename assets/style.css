@@ -170,6 +170,9 @@ body {
 .bg-warning {
     background-color: #FFBC65D9 !important
 }
+.text-black {
+    color: black !important;
+}
 
 #page-content {
     padding: 2rem 1rem;

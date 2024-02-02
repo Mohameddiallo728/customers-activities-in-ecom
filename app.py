@@ -140,11 +140,12 @@ def toggle_collapse(n, is_open):
     [Input("button-0", "n_clicks"),
      Input("button-1", "n_clicks"),
      Input("button-2", "n_clicks"),
+     Input("button-3", "n_clicks"),
      Input('pagination', 'active_page')],
     prevent_initial_call=True
 )
-def update_user_list(button0_clicks, button1_clicks, button2_clicks, active_page):
-    return callbacks.update_user_list(button0_clicks, button1_clicks, button2_clicks, active_page)
+def update_user_list(button0_clicks, button1_clicks, button2_clicks, button3_clicks, active_page):
+    return callbacks.update_user_list(button0_clicks, button1_clicks, button2_clicks, button3_clicks, active_page)
 
 
 @app.callback(

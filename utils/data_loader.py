@@ -1,6 +1,6 @@
 import pandas as pd
 
-from utils.visuals import apply_kmeans
+from utils.visuals import segment_by_purchases_frequency
 
 
 def load_activities():
@@ -35,5 +35,5 @@ def load_encoded():
 
 def load_with_kmean():
     df = load_activities()
-    data = apply_kmeans(df)
+    data = segment_by_purchases_frequency(df)
     return data

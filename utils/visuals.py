@@ -8,8 +8,7 @@ import plotly.express as px
 from dash import dcc, html
 from wordcloud import WordCloud
 
-# Fonction pour créer les cartes groupées
-from utils.ml import apply_kmeans, get_category_label, get_category_color
+from utils.ml import segment_by_purchases_frequency, get_category_label
 
 layout_style = dict(
     plot_bgcolor='#f9f9f9',
@@ -239,6 +238,7 @@ def generate_gender_pie_chart(data):
     fig = px.pie(data, names='Gender', title='Répartition des Genres',
                  labels={'Gender': 'Count'},
                  height=450, hole=0.3, color_discrete_sequence=gender_colors)
+
     fig.update_layout(layout_style)
     return dcc.Graph(figure=fig)
 
@@ -507,24 +507,67 @@ def generate_wordcloud(data):
     return wordcloud_image
 
 
-def generate_cluster_cards(data):
-    data = apply_kmeans(data)[0]
+def get_segments_by_purchases_frequency(data):
+    data = segment_by_purchases_frequency(data)[0]
     categories = data['Cluster'].unique()
     cards = []
 
     for category in categories:
         filtered_data = data[data['Cluster'] == category]
+        # Calcul des pourcentages d'hommes et de femmes
+        total_gender_count = len(filtered_data)
+        male_percentage = round(len(filtered_data[filtered_data['Gender'] == 'Male']) / total_gender_count * 100)
+        female_percentage = round(len(filtered_data[filtered_data['Gender'] == 'Female']) / total_gender_count * 100)
+
+        # Création de deux divs colorés
+        male_div = html.Div([
+            html.P(f"{male_percentage}% Homme", className="card-text"),
+        ], style={'background-color': '#609FFF', 'color': 'white', 'padding': '5px', 'margin': '5px',
+                  'border-radius': '3px', 'text-align': 'center'})
+
+        female_div = html.Div([
+            html.P(f"{female_percentage}% Femme", className="card-text"),
+        ], style={'background-color': '#FFBF6D', 'color': 'white', 'padding': '5px', 'margin': '5px',
+                  'border-radius': '3px', 'text-align': 'center'})
+
+        info_elements = [
+            dbc.Row([
+                dbc.Col(male_div),
+                dbc.Col(female_div),
+            ], className="mb-4", style={'borderBottom': '1px solid #ccc', 'paddingBottom': '10px'}),
+            html.Hr(),
+            dbc.Row(
+                [
+                    dbc.Col(html.Div([
+                        html.H1(len(filtered_data), className="card-title"), html.Span("Clients")
+                    ]), style={'borderRight': '1px solid #ccc', 'marginRight': '10px', 'textAlign': 'center'}),
+                    dbc.Col(html.Div([
+                        html.H1(round(filtered_data['Age'].mean()), className="card-title"), html.Span("Âge moyen")
+                    ]), style={'borderRight': '1px solid #ccc', 'marginRight': '10px', 'textAlign': 'center'}),
+                    dbc.Col(html.Div([
+                        html.H1(f"{filtered_data['Review Rating'].mean():.1f}", className="card-title"),
+                        html.Span("Note")
+                    ]), style={'textAlign': 'center'}),
+                ],
+                className="g-0", style={'borderBottom': '1px solid #ccc', 'paddingBottom': '20px'}
+            ),
+            html.Hr(),
+            html.H1(f"$ {'{:,}'.format(filtered_data['Purchase Amount (USD)'].sum()).replace(',', ' ')}",
+                    className="card-title", style={'textAlign': 'center'}),
+        ]
         card_content = [
-            dbc.CardHeader(f"Catégorie {get_category_label(category)}", style={'cursor': 'pointer'}),
+            dbc.CardHeader(f"{get_category_label(filtered_data['Purchase Amount (USD)'].sum())}",
+                           style={'cursor': 'pointer'}),
             dbc.CardBody([
-                html.H1(len(filtered_data), className="card-title"),
-                html.P(f"{get_category_label(category)}", className="card-text"),
-                dbc.Button(f"View Users", id=f"button-{category}", n_clicks=0),
+                *info_elements,
+                html.Hr(),
+                dbc.Button("Afficher la liste", color="primary", id=f"button-{category}", n_clicks=0),
             ]),
         ]
 
         card = dbc.Col(
-            dbc.Card(card_content, color=get_category_color(category), inverse=True, id=f"cluster-card-{category}"))
+            dbc.Card(card_content, color="#f9f9f9", inverse=True, id=f"cluster-card-{category}",
+                     className="text-black"))
 
         cards.append(card)
 

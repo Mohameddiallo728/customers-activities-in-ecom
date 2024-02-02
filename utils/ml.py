@@ -8,53 +8,46 @@ from surprise.model_selection import train_test_split
 
 
 def map_frequency_to_numeric(frequency):
+
     mapping = {
-        'Fortnightly': 2,
-        'Weekly': 1,
-        'Annually': 52,
-        'Quarterly': 4,
-        'Every 3 Months': 3,
-        'Bi-Weekly': 2,  # Assumption: Bi-weekly is treated as fortnightly
-        'Monthly': 12
+        'Fortnightly': 15,  # each 15 days that means each 2 weeks (Bi-weekly)
+        'Weekly': 7,  # each 7 days that means each week
+        'Annually': 365,  # each 365 days that means once a year
+        'Quarterly': 120,  # each 120 days that means each 4 months
+        'Every 3 Months': 90,  # each 90 days that means each 3 months
+        'Bi-Weekly': 14,  # each 14 days that means each 2 weeks
+        'Monthly': 30  # each 30 days that means each months
     }
     return mapping.get(frequency, 0)  # Default to 0 if the value is not in the mapping
 
 
-def get_category_label(category):
-    labels = {
-        0: 'Clients Sûrs',
-        1: 'Clients Versatiles',
-        2: 'Clients Nécessitant une Attention'
-    }
-    return labels.get(category, 'Autre')
+def get_category_label(total_purchase_amount):
+    # Déterminez une interprétation en fonction de la somme totale des montants d'achat
+    if total_purchase_amount >= 50000:
+        return 'Très Grand Acheteur'
+    elif total_purchase_amount >= 40000:
+        return 'Grand Acheteur'
+    elif total_purchase_amount >= 30000:
+        return 'Acheteur Moyen'
+    elif total_purchase_amount >= 20000:
+        return 'Petit Acheteur'
+    elif total_purchase_amount >= 10000:
+        return 'Très Petit Acheteur'
+    else:
+        return 'Minimal Acheteur'
 
 
-def get_category_color(category):
-    color_mapping = {
-        0: "info",  # Couleur pour la catégorie 0
-        1: "cadetblue",  # Couleur pour la catégorie 1
-        2: "rebeccapurple",  # Couleur pour la catégorie 2
-    }
-    return color_mapping.get(category, "secondary")
-
-
-def apply_kmeans(data):
+def segment_by_purchases_frequency(data):
     data['Frequency of Purchases'] = data['Frequency of Purchases'].apply(map_frequency_to_numeric)
 
-    features = data[['Frequency of Purchases', 'Purchase Amount (USD)', 'Review Rating']]
-    features = features.dropna()
+    features = data[['Age', 'Purchase Amount (USD)', 'Frequency of Purchases']]
 
     scaler = StandardScaler()
     features_scaled = scaler.fit_transform(features)
 
-    num_clusters = 3
-    kmeans = KMeans(n_clusters=num_clusters, random_state=42)
+    kmeans = KMeans(n_clusters=4, random_state=42)
     data['Cluster'] = kmeans.fit_predict(features_scaled)
     silhouette_avg = silhouette_score(features_scaled, data['Cluster'])
-    print('silhouette_avg : ', silhouette_avg)
-    print('Cl 0 : ', data[data['Cluster'] == 0]['Purchase Amount (USD)'].mean())
-    print('Cl 1 :', data[data['Cluster'] == 1]['Purchase Amount (USD)'].mean())
-    print('Cl 2 :', data[data['Cluster'] == 2]['Purchase Amount (USD)'].mean())
     return data, silhouette_avg
 
 

@@ -38,7 +38,7 @@ def toggle_collapse(n, is_open):
     return is_open
 
 
-def update_user_list(button0_clicks, button1_clicks, button2_clicks, page_current):
+def update_user_list(button0_clicks, button1_clicks, button2_clicks, button3_clicks, page_current):
     ctx = dash.callback_context
     # Check which button was clicked
     clicked_button_id = ctx.triggered_id.split(".")[0] if ctx.triggered_id else None
@@ -50,6 +50,8 @@ def update_user_list(button0_clicks, button1_clicks, button2_clicks, page_curren
         category = 1
     elif clicked_button_id == "button-2":
         category = 2
+    elif clicked_button_id == "button-3":
+        category = 3
     else:
         category = 0
 
