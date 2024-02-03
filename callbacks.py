@@ -59,9 +59,6 @@ def update_user_list(button0_clicks, button1_clicks, button2_clicks, button3_cli
     return segment.update_user_list(category, page_current)
 
 
-def update_recommendations_model(selected_user, selected_model):
-    return recommend.update_recommendations_model(selected_user, 6, selected_model)
-
-
-def update_model_comparison_graph(selected_user):
-    return recommend.update_model_comparison_graph(selected_user)
+# Callback pour mettre à jour les recommandations lorsque le bouton est cliqué
+def update_recommendations(n_clicks, user_id):
+    return recommend.update_recommendations(n_clicks, user_id)

@@ -1,14 +1,9 @@
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 from sklearn.preprocessing import StandardScaler
-from surprise import BaselineOnly, KNNWithZScore
-from surprise import KNNBasic
-from surprise import SVD
-from surprise.model_selection import train_test_split
 
 
 def map_frequency_to_numeric(frequency):
-
     mapping = {
         'Fortnightly': 15,  # each 15 days that means each 2 weeks (Bi-weekly)
         'Weekly': 7,  # each 7 days that means each week
@@ -50,37 +45,3 @@ def segment_by_purchases_frequency(data):
     silhouette_avg = silhouette_score(features_scaled, data['Cluster'])
     return data, silhouette_avg
 
-
-def train_knn_model(data):
-    model = KNNBasic(sim_options={'user_based': True})
-    trainset, _ = train_test_split(data, test_size=0.2)
-    model.fit(trainset)
-    return model
-
-
-def train_baseline_model(data):
-    model = BaselineOnly()
-    trainset, _ = train_test_split(data, test_size=0.2)
-    model.fit(trainset)
-    return model
-
-
-def train_svd_model(data):
-    model = SVD()
-    trainset, _ = train_test_split(data, test_size=0.2)
-    model.fit(trainset)
-    return model
-
-
-def train_svd_model(data):
-    model = SVD()
-    trainset, _ = train_test_split(data, test_size=0.2)
-    model.fit(trainset)
-    return model
-
-
-def train_knn_with_zscore_model(data):
-    model = KNNWithZScore(sim_options={'user_based': True})
-    trainset, _ = train_test_split(data, test_size=0.2)
-    model.fit(trainset)
-    return model

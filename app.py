@@ -149,20 +149,12 @@ def update_user_list(button0_clicks, button1_clicks, button2_clicks, button3_cli
 
 
 @app.callback(
-    Output('output-recommendations-multiple', 'children'),
-    [Input('user-dropdown', 'value'),
-     Input('model-dropdown', 'value')]
+    Output('recommendations-list', 'children'),
+    [Input('get-recommendations-button', 'n_clicks')],
+    [dash.dependencies.State('user-dropdown', 'value')]
 )
-def update_recommendations_model(selected_user, selected_model):
-    return callbacks.update_recommendations_model(selected_user, selected_model)
-
-
-@app.callback(
-    Output('model-comparison-graph', 'figure'),
-    Input('user-dropdown', 'value')
-)
-def update_model_comparison_graph(selected_user):
-    return callbacks.update_model_comparison_graph(selected_user)
+def update_recommendations(n_clicks, selected_user):
+    return callbacks.update_recommendations(n_clicks, selected_user)
 
 
 if __name__ == "__main__":

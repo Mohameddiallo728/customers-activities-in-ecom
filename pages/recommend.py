@@ -1,155 +1,80 @@
-import plotly.graph_objects as go
-from dash import dcc, html
-from dash.exceptions import PreventUpdate
-from surprise import Dataset, Reader, accuracy
-from surprise.model_selection import train_test_split
+from lightfm import LightFM
+from lightfm import cross_validation
+from lightfm.data import Dataset
 
+# Charger les données
 from utils.data_loader import load_recommendations
-from utils.ml import train_baseline_model
-from utils.ml import train_knn_model
-from utils.ml import train_knn_with_zscore_model
-from utils.ml import train_svd_model
-from utils.visuals import generate_product_card
+from utils.visuals import *
 
-# Chargement des données et prétraitement pour le modèle de filtrage collaboratif
-recommendations = load_recommendations()
+data = load_recommendations()
 
-reader = Reader(rating_scale=(0, 5))
-surprise_data = Dataset.load_from_df(recommendations[['Customer ID', 'product id', 'Review Rating']], reader)
-trainset, _ = train_test_split(surprise_data, test_size=0.2)
+# Créer une instance de Dataset et construire les interactions utilisateur-item
+dataset = Dataset()
+dataset.fit(users=data['Customer ID'], items=data['product id'])
+(interactions, _) = dataset.build_interactions(
+    [(user, item, 1) for user, item in zip(data['Customer ID'], data['product id'])])
 
+# Diviser les données en ensembles d'apprentissage et de test
+train, test = cross_validation.random_train_test_split(interactions)
 
-# Initialisation des modèles
-knn_model = train_knn_model(surprise_data)
-baseline_model = train_baseline_model(surprise_data)
-svd_model = train_svd_model(surprise_data)
-knn_with_zscore_model = train_knn_with_zscore_model(surprise_data)
+# Créer le modèle LightFM
+model = LightFM(loss='warp')
+model.fit(train, epochs=30, num_threads=2)
 
-# Liste des modèles
-models = {
-    'KNN Basic': knn_model,
-    'Baseline': baseline_model,
-    'SVD': svd_model,
-    'KNN With ZScore': knn_with_zscore_model
-}
-
-
-# Création de la mise en page Dash
+# Mise en page de l'application
 layout = html.Div([
-    html.H1("Recommandation de Produits"),
+    html.H1("Système de Recommandation"),
 
-    html.Label("Sélectionnez un utilisateur:"),
+    html.Label("Sélectionnez un utilisateur :"),
     dcc.Dropdown(
         id='user-dropdown',
-        options=[{'label': str(user), 'value': user} for user in recommendations['Customer ID'].unique()],
-        value=recommendations['Customer ID'].iloc[0],
-        style={'width': '50%'}
+        options=[{'label': str(user), 'value': user} for user in data['Customer ID'].unique()],
+        value=data['Customer ID'].iloc[0]
     ),
 
-    html.Br(),
+    html.Button("Obtenir des recommandations", id='get-recommendations-button'),
 
-    html.Label("Sélectionnez le modèle de recommandation:"),
-    dcc.Dropdown(
-        id='model-dropdown',
-        options=[{'label': model_name, 'value': model_name} for model_name in models.keys()],
-        value='KNN Basic',
-        style={'width': '50%'}
-    ),
-
-    html.Br(),
-
-    html.Div(id='output-recommendations-multiple'),
-
-    dcc.Graph(id='model-comparison-graph')
+    html.H3("Produits recommandés :"),
+    html.Ul(id='recommendations-list')
 ])
 
 
-def update_recommendations_model(selected_user, num_products, selected_model):
-    if selected_user is None:
-        raise PreventUpdate  # Si l'utilisateur n'est pas sélectionné, arrêtez l'exécution
+# Fonction de recommandation mise à jour
+def get_recommendations_info(user_id, num_recommendations=5):
+    # Convertir user_id en entier
+    user_id = int(user_id)
 
-    model = models[selected_model]
+    # Obtenir les produits déjà achetés par l'utilisateur
+    known_positives = data[data['Customer ID'] == user_id]['product id'].unique()
 
-    user_attributes = ['Color', 'Size', 'Purchase Amount (USD)', 'Season', 'Previous Purchases', 'Shipping Type',
-                       'Interaction type', 'Selling Price', 'Shipping Weight (lbs)', 'Length', 'Width', 'Height']
+    # Prédire les produits que l'utilisateur pourrait aimer
+    unique_product_ids = data['product id'].unique()
+    scores = model.predict(user_id, list(range(len(unique_product_ids))))
 
-    # Utiliser le modèle pour prédire les évaluations des produits pour l'utilisateur sélectionné
-    user_ratings = recommendations[recommendations['Customer ID'] == selected_user][['Customer ID', 'product id',
-                                                                                     'Review Rating'] + user_attributes]
+    # Trier les produits par score de prédiction
+    top_items = unique_product_ids[scores.argsort()[-1:-num_recommendations - 1:-1]]
 
-    # Gestion des valeurs manquantes si nécessaire
-    user_ratings = user_ratings.dropna()
+    # Exclure les produits déjà achetés
+    recommendations = [item for item in top_items if item not in known_positives][:num_recommendations]
 
-    user_ratings = list(zip(*[user_ratings[c] for c in ['Customer ID', 'product id',
-                                                        'Review Rating'] + user_attributes]))
+    # Obtenir les détails des produits recommandés
+    recommendations_info = data[data['product id'].isin(recommendations)]
 
-    print(f"User Ratings: {user_ratings}")
-
-    predictions = []
-    for row in user_ratings:
-        uid, iid, true_r, color, size, purchase_amount, season, previous_purchases, shipping_type, interaction_type, \
-        selling_price, shipping_weight, length, width, height = row
-
-        # Modifier cette ligne en fonction de votre modèle et des attributs supplémentaires
-        pred = model.predict(uid, iid, r_ui=true_r, verbose=False)
-        predictions.append((pred.uid, pred.iid, pred.est))
-
-    print(f"Predictions: {predictions}")
-
-    # Le tri et la sélection des produits recommandés doivent être en dehors de la boucle
-    # Tri des prédictions par estimation décroissante
-    sorted_predictions = sorted(predictions, key=lambda x: x[2], reverse=True)
-
-    # Sélectionner les produits recommandés (plusieurs produits)
-    recommended_products = set()  # Utilisez un ensemble pour garantir l'unicité des produits
-    for uid, iid, est in sorted_predictions:
-        if iid not in recommended_products and len(recommended_products) < num_products:
-            recommended_products.add(iid)
-
-    print(f"Recommended Products: {recommended_products}")
-
-    product_cards = []
-    for product_id in recommended_products:
-        product = generate_product_card(product_id, recommendations)
-        product_cards.append(product)
-
-    return product_cards
+    return recommendations_info
 
 
-def update_model_comparison_graph(selected_user):
-    if selected_user is None:
-        raise PreventUpdate
+# Callback pour mettre à jour les recommandations lorsque le bouton est cliqué
+def update_recommendations(n_clicks, user_id):
+    if n_clicks is None:
+        return []
 
-    # Créez une liste pour stocker les scores pour chaque modèle
-    model_scores = {model_name: [] for model_name in models}
-    num_time_periods = 10
-    # Boucle sur les périodes de temps ou d'autres mesures
-    for time_period in range(num_time_periods):  # Remplacez num_time_periods par le nombre approprié
-        # Obtenez les scores pour chaque modèle
-        for model_name, model in models.items():
-            # Divisez le jeu de données en ensembles de formation et de test (effectué une seule fois)
-            trainset, testset = train_test_split(surprise_data, test_size=0.2)
+    # Obtenir les recommandations pour l'utilisateur sélectionné
+    recommendations_info = get_recommendations_info(user_id)
 
-            # Entraînez le modèle sur l'ensemble de formation
-            model.fit(trainset)
+    # Afficher les recommandations
+    product_cards = [
+        generate_product_visuel(row)  # Utilisez width=6 pour occuper la moitié de la ligne
+        for _, row in recommendations_info.iterrows()
+    ]
 
-            # Faites des prédictions sur l'ensemble de test
-            predictions = model.test(testset)
-
-            # Calculez le RMSE en utilisant accuracy.rmse
-            rmse = accuracy.rmse(predictions)
-
-            # Ajoutez le score à la liste correspondante pour le modèle
-            model_scores[model_name].append(rmse)
-
-    # Créez un graphique linéaire interactif pour montrer la performance relative des modèles au fil du temps
-    fig = go.Figure()
-
-    for model_name, scores in model_scores.items():
-        fig.add_trace(go.Scatter(x=list(range(num_time_periods)), y=scores, mode='lines', name=model_name))
-
-    fig.update_layout(title='Performance relative des modèles de recommandation au fil du temps',
-                      xaxis_title='Période de temps',
-                      yaxis_title='RMSE')
-
-    return fig
+    return dbc.Row(product_cards, className="mb-4")
