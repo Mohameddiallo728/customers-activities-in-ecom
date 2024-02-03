@@ -3,10 +3,11 @@ from lightfm import cross_validation
 from lightfm.data import Dataset
 
 # Charger les données
-from utils.data_loader import load_recommendations
+from utils.data_loader import load_recommendations, load_customers
 from utils.visuals import *
 
 data = load_recommendations()
+customer = load_customers()
 
 # Créer une instance de Dataset et construire les interactions utilisateur-item
 dataset = Dataset()
@@ -23,24 +24,28 @@ model.fit(train, epochs=30, num_threads=2)
 
 # Mise en page de l'application
 layout = html.Div([
-    html.H1("Système de Recommandation"),
-
-    html.Label("Sélectionnez un utilisateur :"),
+    html.H1("Recommandation de produits / Articles"),
+    html.Hr(),
+    html.P("Sélectionnez un utilisateur :"),
     dcc.Dropdown(
         id='user-dropdown',
-        options=[{'label': str(user), 'value': user} for user in data['Customer ID'].unique()],
-        value=data['Customer ID'].iloc[0]
+        options=[{'label': str(user), 'value': user} for user in customer['Customer ID'].unique()],
+        value=data['Customer ID'].iloc[0],
+        style={"height": "100%"}
     ),
-
-    html.Button("Obtenir des recommandations", id='get-recommendations-button'),
-
-    html.H3("Produits recommandés :"),
+    html.Hr(),
+    dbc.Button("Obtenir des recommandations",
+               color="primary",
+               id='get-recommendations-button',
+               className=""
+               ),
+    html.Hr(),
     html.Ul(id='recommendations-list')
 ])
 
 
 # Fonction de recommandation mise à jour
-def get_recommendations_info(user_id, num_recommendations=5):
+def get_recommendations_info(user_id, num_recommendations=6):
     # Convertir user_id en entier
     user_id = int(user_id)
 

@@ -6,9 +6,6 @@ from pages import (
     segment, bestproduct
 )
 from pages import notfound
-from utils.data_loader import load_with_kmean
-
-data = load_with_kmean()
 
 
 def render_page_content(pathname):

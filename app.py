@@ -107,12 +107,24 @@ sidebar = html.Div(
     id="sidebar",
 )
 
-content = html.Div(id="page-content")
+content = html.Div(
+    [
+        dbc.Spinner(
+            html.Div(id="page-content-inner"),
+            spinner_style={"width": "3rem", "height": "3rem", "color": "black"},
+            color="primary",
+        )
+    ],
+    id="page-content",
+)
 
 app.layout = html.Div([dcc.Location(id="url"), navbar, sidebar, content])
 
 
-@app.callback(Output("page-content", "children"), [Input("url", "pathname")])
+@app.callback(
+    Output("page-content-inner", "children"),
+    [Input("url", "pathname")]
+)
 def render_page_content(pathname):
     return callbacks.render_page_content(pathname)
 
