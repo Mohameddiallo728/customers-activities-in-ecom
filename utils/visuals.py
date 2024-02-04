@@ -124,7 +124,7 @@ def generate_product_card(product_id, recommendations):
     return card
 
 
-def generate_product_visuel(product_info):
+def generate_product_visuel(product_info, score=None):
     # Création de la card selon le modèle fourni
     info_elements = html.Span(
         [
@@ -139,7 +139,7 @@ def generate_product_visuel(product_info):
                 color="warning",
                 text_color="black",
                 className="border me-1",
-            ),
+                ),
             dbc.Badge(
                 f"Poids : {product_info['Shipping Weight (lbs)']} lbs",
                 color="secondary",
@@ -149,33 +149,47 @@ def generate_product_visuel(product_info):
             html.Br(), html.Br(),
         ]
     )
-    card = dbc.Card(
-        [
-            dbc.Row(
-                [
-                    dbc.Col(
-                        dbc.CardImg(
-                            src=product_info['Image'],
-                            className="img-fluid rounded-start",
-                        ),
-                        className="col-md-4",
+    card_content = [
+        dbc.Row(
+            [
+                dbc.Col(
+                    dbc.CardImg(
+                        src=product_info['Image'],
+                        className="img-fluid rounded-start",
                     ),
-                    dbc.Col(
-                        dbc.CardBody(
-                            [
-                                html.H5(product_info['Product Name'], className="card-title"),
-                                info_elements,
-                                html.H1(f"$ {product_info['Selling Price']}", className="card-text price"),
-                                dbc.Button("Voir le produit", color="primary", href=product_info["Product Url"],
-                                           className="see-product")
-                            ]
-                        ),
-                        className="col-md-8",
+                    className="col-md-4",
+                ),
+                dbc.Col(
+                    dbc.CardBody(
+                        [
+                            html.H5(product_info['Product Name'], className="card-title"),
+                            info_elements,
+                            html.H1(f"$ {product_info['Selling Price']}", className="card-text price"),
+                            dbc.Button("Voir le produit", color="primary", href=product_info["Product Url"],
+                                       className="see-product")
+                        ]
                     ),
-                ],
-                className="g-0 d-flex align-items-center",
+                    className="col-md-8",
+                ),
+            ],
+            className="g-0 d-flex align-items-center",
+        ),
+    ]
+
+    # Include the score badge if the score is provided
+    if score is not None:
+        card_content.append(
+            dbc.Badge(
+                f"{round(float(score) * 100, 2)}%",
+                color="danger",
+                pill=True,
+                text_color="white",
+                className="position-absolute top-0 start-100 translate-middle",
             )
-        ],
+        )
+
+    card = dbc.Card(
+        card_content,
         className="mb-3",
         style={"maxWidth": "700px", "marginRight": "20px", "marginLeft": "20px"},
     )

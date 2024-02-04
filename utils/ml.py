@@ -1,3 +1,6 @@
+from lightfm import cross_validation, LightFM
+from lightfm.data import Dataset
+from lightfm.evaluation import auc_score
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 from sklearn.preprocessing import StandardScaler
@@ -45,3 +48,48 @@ def segment_by_purchases_frequency(data):
     silhouette_avg = silhouette_score(features_scaled, data['Cluster'])
     return data, silhouette_avg
 
+
+def create_and_tune_recommender(raw_data):
+    def evaluate_models(loss_functions, hyperparameters, interactions):
+        """Evaluates different model configurations and returns the best model."""
+        best_score = 0
+        best_model = None
+        for loss_function in loss_functions:
+            for params in hyperparameters:
+                model = LightFM(loss=loss_function, **params)
+                model.fit(interactions, epochs=30, num_threads=2)
+
+                # Evaluate performance using appropriate metrics
+                test_auc = auc_score(model, test).mean()
+                if test_auc > best_score:
+                    best_score = test_auc
+                    best_model = model
+
+        return best_model, best_score
+
+    encoded_data = raw_data.copy()
+    # encoded_data = preprocess_data(raw_data.copy())
+    dataset = Dataset()
+    dataset.fit(users=encoded_data['Customer ID'], items=encoded_data['product id'])
+    (interactions, _) = dataset.build_interactions(
+        [(user, item, 1) for user, item in zip(encoded_data['Customer ID'], encoded_data['product id'])])
+
+    # Split interactions into training and testing sets
+    train, test = cross_validation.random_train_test_split(interactions)
+
+    # Define loss functions and hyperparameters to try
+    loss_functions = ['warp', 'bpr']
+    hyperparameters = [
+        # Explore different learning rates
+        {'learning_rate': 0.01, 'no_components': 32},
+        {'learning_rate': 0.05, 'no_components': 32},
+        {'learning_rate': 0.1, 'no_components': 32},
+        {'learning_rate': 0.05, 'no_components': 64},
+        {'learning_rate': 0.1, 'no_components': 64},
+        {'learning_rate': 0.01, 'no_components': 128},
+        {'learning_rate': 0.05, 'no_components': 128},
+        {'learning_rate': 0.1, 'no_components': 128},
+    ]
+
+    best_model, best_score = evaluate_models(loss_functions, hyperparameters, train)
+    return best_model, best_score
